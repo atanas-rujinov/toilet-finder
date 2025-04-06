@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Toilet Map</h2>
+<div class="map-container">
+    <div id="map"></div>
+</div>
+
+<div class="toilet-form">
+    <h3>Add a Toilet</h3>
+    <form id="add-toilet-form" method="post" action="{{ url_for('add_toilet') }}">
+        <div class="form-group">
+            <label for="description">Description</label>
+            <input type="text" id="description" name="description" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="accessible" name="accessible">
+                Accessible
+            </label>
+        </div>
+        <input type="hidden" id="latitude" name="latitude" required>
+        <input type="hidden" id="longitude" name="longitude" required>
+        <p>Click on the map to set the location</p>
+        <button type="submit" class="btn" id="submit-button" disabled>Add Toilet</button>
+    </form>
+</div>
+
+<!-- Add Leaflet CSS first -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
+<!-- Add Leaflet JS second -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js"></script>
+
+<script>
+    // Wait for the document to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the map
+        var map = L.map('map').setView([51.505, -0.09], 13);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Variable to store the marker
+        var marker;
+        // Variable to store the user location marker
+        var userLocationMarker;
+
+        var youIcon = L.icon({
+            iconUrl: '../static/you.png',
+            iconSize:     [90, 90], // size of the icon
+            iconAnchor:   [45, 45], // point of the icon which will correspond to marker's location
+            popupAnchor:  [0, -40] // point from which the popup should open relative to the iconAnchor
+        });
+
+        var baseIcon = L.icon({
+            iconUrl: '../static/base.png',
+            iconSize:     [90, 90], // size of the icon
+            iconAnchor:   [45, 45], // point of the icon which will correspond to marker's location
+            popupAnchor:  [0, -40] // point from which the popup should open relative to the iconAnchor
+        });
+        
+        // Handle click on map
+        map.on('click', function(e) {
+            // Remove existing marker if it exists
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            
+            // Create a new marker at the clicked position
+            marker = L.marker(e.latlng, {icon: baseIcon}).addTo(map);
+            
+            // Set the coordinates in the form
+            document.getElementById('latitude').value = e.latlng.lat;
+            document.getElementById('longitude').value = e.latlng.lng;
+            
+            // Enable the submit button
+            document.getElementById('submit-button').disabled = false;
+        });
+        
+        // Load existing toilets
+        fetch('/api/toilets')
+            .then(response => response.json())
+            .then(data => {
+                data.toilets.forEach(toilet => {
+                    var toiletMarker = L.marker([toilet.latitude, toilet.longitude], {icon: baseIcon}).addTo(map);
+                    toiletMarker.bindPopup(`
+                        <strong>${toilet.description}</strong><br>
+                        Added by: ${toilet.author}<br>
+                        ${toilet.accessible ? 'Accessible' : 'Not accessible'}
+                    `);
+                });
+            })
+            .catch(error => console.error('Error loading toilets:', error));
+        
+        // Function to update user's location on the map
+        function updateUserLocation(position) {
+            var userLat = position.coords.latitude;
+            var userLng = position.coords.longitude;
+            
+            // If this is the first location update, center the map
+            if (!userLocationMarker) {
+                map.setView([userLat, userLng], 15);
+                userLocationMarker = L.marker([userLat, userLng], {icon: youIcon}).addTo(map);
+                userLocationMarker.bindPopup("You are here").openPopup();
+            } else {
+                // Update the marker position
+                userLocationMarker.setLatLng([userLat, userLng]);
+            }
+        }
+        
+        // Function to handle geolocation errors
+        function handleLocationError(error) {
+            console.error("Error getting location:", error.message);
+        }
+        
+        // Watch the user's position and update continuously
+        if (navigator.geolocation) {
+            // Get initial position
+            navigator.geolocation.getCurrentPosition(updateUserLocation, handleLocationError);
+            
+            // Then watch for position changes
+            var watchId = navigator.geolocation.watchPosition(updateUserLocation, handleLocationError);
+        } else {
+            console.log('Geolocation is not supported by this browser');
+        }
+    });
+</script>
+{% endblock %}
