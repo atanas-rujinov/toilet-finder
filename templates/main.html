@@ -19,12 +19,119 @@
                 Accessible
             </label>
         </div>
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="has_toilet_paper" name="has_toilet_paper">
+                Has Toilet Paper
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="cleanliness">Cleanliness Rating (1-5 stars)</label>
+            <select id="cleanliness" name="cleanliness" class="form-control" required>
+                <option value="1">1 Star (Very Dirty)</option>
+                <option value="2">2 Stars</option>
+                <option value="3" selected>3 Stars (Average)</option>
+                <option value="4">4 Stars</option>
+                <option value="5">5 Stars (Very Clean)</option>
+            </select>
+        </div>
         <input type="hidden" id="latitude" name="latitude" required>
         <input type="hidden" id="longitude" name="longitude" required>
         <p>Click on the map to set the location</p>
         <button type="submit" class="btn" id="submit-button" disabled>Add Toilet</button>
     </form>
 </div>
+
+<!-- Review Modal -->
+<div id="review-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Review Toilet</h3>
+        <form id="review-form" method="post">
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="review-accessible" name="accessible">
+                    Currently Accessible
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="review-has_toilet_paper" name="has_toilet_paper">
+                    Currently Has Toilet Paper
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="review-cleanliness">Current Cleanliness Rating (1-5 stars)</label>
+                <select id="review-cleanliness" name="cleanliness" class="form-control" required>
+                    <option value="1">1 Star (Very Dirty)</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3" selected>3 Stars (Average)</option>
+                    <option value="4">4 Stars</option>
+                    <option value="5">5 Stars (Very Clean)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="review-comment">Comment (optional)</label>
+                <textarea id="review-comment" name="comment" class="form-control" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn">Submit Review</button>
+        </form>
+    </div>
+</div>
+
+<!-- Add some CSS for the modal -->
+<style>
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
+    }
+    
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        border-radius: 5px;
+    }
+    
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover,
+    .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .toilet-info {
+        margin-bottom: 10px;
+    }
+
+    .reviews-list {
+        margin-top: 15px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .review-item {
+        border-bottom: 1px solid #eee;
+        padding: 5px 0;
+    }
+</style>
 
 <!-- Add Leaflet CSS first -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css" />
@@ -46,6 +153,8 @@
         var marker;
         // Variable to store the user location marker
         var userLocationMarker;
+        // Variable to store the current toilet ID for review
+        var currentToiletId;
 
         var youIcon = L.icon({
             iconUrl: '../static/you.png',
@@ -79,20 +188,169 @@
             document.getElementById('submit-button').disabled = false;
         });
         
+        // Function to generate star rating HTML
+        function getStarsHTML(rating) {
+            var stars = '';
+            for (var i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '★'; // Filled star
+                } else {
+                    stars += '☆'; // Empty star
+                }
+            }
+            return stars;
+        }
+        
+        // Function to open review modal
+        function openReviewModal(toiletId) {
+            currentToiletId = toiletId;
+            
+            // Update the form action
+            document.getElementById('review-form').action = '/add_review/' + toiletId;
+            
+            // Clear any existing toilet info and reviews
+            var toiletInfo = document.querySelector('.toilet-info');
+            if (toiletInfo) toiletInfo.remove();
+            
+            var reviewsList = document.querySelector('.reviews-list');
+            if (reviewsList) reviewsList.remove();
+            
+            // Show the modal
+            document.getElementById('review-modal').style.display = 'block';
+            
+            // Get toilet details and previous reviews
+            fetch('/api/toilet/' + toiletId)
+                .then(response => response.json())
+                .then(data => {
+                    // Populate the modal with toilet details
+                    document.getElementById('review-form').insertAdjacentHTML('beforebegin', `
+                        <div class="toilet-info">
+                            <strong>${data.description}</strong><br>
+                            ${data.accessible ? 'Accessible' : 'Not accessible'} | 
+                            ${data.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'} | 
+                            Cleanliness: ${getStarsHTML(data.cleanliness)}<br>
+                            ${data.reviews.length} review(s)
+                        </div>
+                    `);
+                    
+                    // Add previous reviews
+                    if (data.reviews.length > 0) {
+                        var reviewsHtml = '<div class="reviews-list"><h4>Previous Reviews</h4>';
+                        
+                        data.reviews.forEach(review => {
+                            reviewsHtml += `
+                                <div class="review-item">
+                                    <strong>${review.author}</strong> (${review.timestamp})<br>
+                                    ${review.accessible ? 'Accessible' : 'Not accessible'} | 
+                                    ${review.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'} | 
+                                    Cleanliness: ${getStarsHTML(review.cleanliness)}<br>
+                                    ${review.comment ? `"${review.comment}"` : ''}
+                                </div>
+                            `;
+                        });
+                        
+                        reviewsHtml += '</div>';
+                        document.getElementById('review-form').insertAdjacentHTML('beforebegin', reviewsHtml);
+                    }
+                })
+                .catch(error => console.error('Error loading toilet details:', error));
+        }
+        
+        // Close modal when clicking the X
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('review-modal').style.display = 'none';
+        });
+        
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            if (event.target == document.getElementById('review-modal')) {
+                document.getElementById('review-modal').style.display = 'none';
+            }
+        });
+        
         // Load existing toilets
         fetch('/api/toilets')
             .then(response => response.json())
             .then(data => {
                 data.toilets.forEach(toilet => {
                     var toiletMarker = L.marker([toilet.latitude, toilet.longitude], {icon: baseIcon}).addTo(map);
-                    toiletMarker.bindPopup(`
+                    
+                    // Create popup content with a review button
+                    var popupContent = `
                         <strong>${toilet.description}</strong><br>
                         Added by: ${toilet.author}<br>
-                        ${toilet.accessible ? 'Accessible' : 'Not accessible'}
-                    `);
+                        ${toilet.accessible ? 'Accessible' : 'Not accessible'}<br>
+                        ${toilet.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'}<br>
+                        Cleanliness: ${getStarsHTML(toilet.cleanliness)}<br>
+                        ${toilet.review_count} review(s)<br>
+                        <button class="review-btn" data-toilet-id="${toilet.id}">Leave a Review</button>
+                    `;
+                    
+                    var popup = L.popup().setContent(popupContent);
+                    toiletMarker.bindPopup(popup);
+                    
+                    // Improve touch handling on mobile
+                    toiletMarker.on('click', function() {
+                        toiletMarker.openPopup();
+                    });
+                    
+                    // Add event listener to review button after popup is opened
+                    toiletMarker.on('popupopen', function() {
+                        setTimeout(function() {
+                            var reviewBtn = document.querySelector('.review-btn');
+                            if (reviewBtn) {
+                                reviewBtn.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    openReviewModal(this.getAttribute('data-toilet-id'));
+                                });
+                            }
+                        }, 100); // Small delay to ensure the DOM is updated
+                    });
                 });
             })
             .catch(error => console.error('Error loading toilets:', error));
+        
+        // Add some extra CSS for better mobile experience
+        var mapContainer = document.querySelector('.map-container');
+        mapContainer.style.height = (window.innerHeight * 0.6) + 'px';
+        
+        // Make review button more touch-friendly
+        var style = document.createElement('style');
+        style.textContent = `
+            .review-btn {
+                padding: 10px;
+                margin-top: 8px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+                width: 100%;
+            }
+            
+            .leaflet-popup-content {
+                margin: 15px;
+                min-width: 200px;
+            }
+            
+            @media (max-width: 768px) {
+                .leaflet-popup-content {
+                    min-width: 180px;
+                }
+                
+                .toilet-form {
+                    padding: 10px;
+                }
+                
+                .modal-content {
+                    margin: 10% auto;
+                    width: 90%;
+                }
+            }
+        `;
+        document.head.appendChild(style);
         
         // Function to update user's location on the map
         function updateUserLocation(position) {
@@ -118,10 +376,16 @@
         // Watch the user's position and update continuously
         if (navigator.geolocation) {
             // Get initial position
-            navigator.geolocation.getCurrentPosition(updateUserLocation, handleLocationError);
+            var options = {
+                enableHighAccuracy: true,  // Use GPS if available
+                timeout: 10000,            // Time to wait for location (10 seconds)
+                maximumAge: 0              // Don't use cached position
+            };
+
+            navigator.geolocation.getCurrentPosition(updateUserLocation, handleLocationError, options);
             
             // Then watch for position changes
-            var watchId = navigator.geolocation.watchPosition(updateUserLocation, handleLocationError);
+            var watchId = navigator.geolocation.watchPosition(updateUserLocation, handleLocationError, options);
         } else {
             console.log('Geolocation is not supported by this browser');
         }
