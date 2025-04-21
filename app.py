@@ -54,7 +54,7 @@ class Toilet(db.Model):
                 yes_votes += 1
         
         # If more than half of all reviews (including initial) say it's accessible, consider it accessible
-        return yes_votes > (len(self.reviews) + 1) / 2
+        return yes_votes >= (len(self.reviews) + 1) / 2
     
     def get_toilet_paper_consensus(self):
         # Count votes for toilet paper
@@ -64,7 +64,7 @@ class Toilet(db.Model):
                 yes_votes += 1
         
         # If more than half of all reviews (including initial) say it has toilet paper, consider it has toilet paper
-        return yes_votes > (len(self.reviews) + 1) / 2
+        return yes_votes >= (len(self.reviews) + 1) / 2
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)

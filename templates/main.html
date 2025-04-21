@@ -89,9 +89,9 @@
         width: 100%;
         height: 100%;
         overflow: auto;
-        background-color: rgba(0,0,0,0.4);
+        background-color: rgba(0, 0, 0, 0.4);
     }
-    
+
     .modal-content {
         background-color: #fefefe;
         margin: 15% auto;
@@ -101,7 +101,7 @@
         max-width: 600px;
         border-radius: 5px;
     }
-    
+
     .close {
         color: #aaa;
         float: right;
@@ -109,7 +109,7 @@
         font-weight: bold;
         cursor: pointer;
     }
-    
+
     .close:hover,
     .close:focus {
         color: black;
@@ -140,15 +140,15 @@
 
 <script>
     // Wait for the document to be fully loaded
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Initialize the map
         var map = L.map('map').setView([51.505, -0.09], 13);
-        
+
         // Add OpenStreetMap tiles
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
-        
+
         // Variable to store the marker
         var marker;
         // Variable to store the user location marker
@@ -158,36 +158,135 @@
 
         var youIcon = L.icon({
             iconUrl: '../static/you.png',
-            iconSize:     [90, 90], // size of the icon
-            iconAnchor:   [45, 45], // point of the icon which will correspond to marker's location
-            popupAnchor:  [0, -40] // point from which the popup should open relative to the iconAnchor
+            iconSize: [50, 50], // size of the icon
+            iconAnchor: [25, 50], // point of the icon which will correspond to marker's location
+            popupAnchor: [0, -40] // point from which the popup should open relative to the iconAnchor
         });
 
-        var baseIcon = L.icon({
+        var oneStarIcon = L.icon({
             iconUrl: '../static/base.png',
-            iconSize:     [90, 90], // size of the icon
-            iconAnchor:   [45, 45], // point of the icon which will correspond to marker's location
-            popupAnchor:  [0, -40] // point from which the popup should open relative to the iconAnchor
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
         });
-        
+
+        var twoStarIcon = L.icon({
+            iconUrl: '../static/2star.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var threeStarIcon = L.icon({
+            iconUrl: '../static/3star.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var fourStarIcon = L.icon({
+            iconUrl: '../static/4star.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var fiveStarIcon = L.icon({
+            iconUrl: '../static/5star.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var oneStarIconPaper = L.icon({
+            iconUrl: '../static/basePAPER.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var twoStarIconPaper = L.icon({
+            iconUrl: '../static/2starPAPER.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var threeStarIconPaper = L.icon({
+            iconUrl: '../static/3starPAPER.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var fourStarIconPaper = L.icon({
+            iconUrl: '../static/4starPAPER.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        var fiveStarIconPaper = L.icon({
+            iconUrl: '../static/5starPAPER.png',
+            iconSize: [50, 50],
+            iconAnchor: [25, 50],
+            popupAnchor: [0, -40]
+        });
+
+        // Function to get the appropriate icon based on cleanliness rating
+        function getToiletIcon(cleanliness, paper) {
+            if(paper){
+                switch (parseInt(cleanliness)) {
+                case 1:
+                    return oneStarIconPaper;
+                case 2:
+                    return twoStarIconPaper;
+                case 3:
+                    return threeStarIconPaper;
+                case 4:
+                    return fourStarIconPaper;
+                case 5:
+                    return fiveStarIconPaper;
+                default:
+                    return oneStarIconPaper;
+            }
+            }
+            else {
+                switch (parseInt(cleanliness)) {
+                case 1:
+                    return oneStarIcon;
+                case 2:
+                    return twoStarIcon;
+                case 3:
+                    return threeStarIcon;
+                case 4:
+                    return fourStarIcon;
+                case 5:
+                    return fiveStarIcon;
+                default:
+                    return oneStarIcon;
+            }
+            }
+        }
+
         // Handle click on map
-        map.on('click', function(e) {
+        map.on('click', function (e) {
             // Remove existing marker if it exists
             if (marker) {
                 map.removeLayer(marker);
             }
-            
-            // Create a new marker at the clicked position
-            marker = L.marker(e.latlng, {icon: baseIcon}).addTo(map);
-            
+
+            // Create a new marker at the clicked position with the base (1-star) icon
+            marker = L.marker(e.latlng, { icon: oneStarIcon }).addTo(map);
+
             // Set the coordinates in the form
             document.getElementById('latitude').value = e.latlng.lat;
             document.getElementById('longitude').value = e.latlng.lng;
-            
+
             // Enable the submit button
             document.getElementById('submit-button').disabled = false;
         });
-        
+
         // Function to generate star rating HTML
         function getStarsHTML(rating) {
             var stars = '';
@@ -200,106 +299,105 @@
             }
             return stars;
         }
-        
+
         // Function to open review modal
         function openReviewModal(toiletId) {
             currentToiletId = toiletId;
-            
+
             // Update the form action
             document.getElementById('review-form').action = '/add_review/' + toiletId;
-            
+
             // Clear any existing toilet info and reviews
-            var toiletInfo = document.querySelector('.toilet-info');
-            if (toiletInfo) toiletInfo.remove();
-            
-            var reviewsList = document.querySelector('.reviews-list');
-            if (reviewsList) reviewsList.remove();
-            
+            document.querySelectorAll('.toilet-info, .reviews-list').forEach(el => el.remove());
+
             // Show the modal
             document.getElementById('review-modal').style.display = 'block';
-            
+
             // Get toilet details and previous reviews
             fetch('/api/toilet/' + toiletId)
                 .then(response => response.json())
                 .then(data => {
                     // Populate the modal with toilet details
                     document.getElementById('review-form').insertAdjacentHTML('beforebegin', `
-                        <div class="toilet-info">
-                            <strong>${data.description}</strong><br>
-                            ${data.accessible ? 'Accessible' : 'Not accessible'} | 
-                            ${data.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'} | 
-                            Cleanliness: ${getStarsHTML(data.cleanliness)}<br>
-                            ${data.reviews.length} review(s)
-                        </div>
-                    `);
-                    
-                    // Add previous reviews
-                    if (data.reviews.length > 0) {
+                <div class="toilet-info">
+                    <strong>${data.description}</strong><br>
+                    ${data.accessible ? 'Accessible' : 'Not accessible'} | 
+                    ${data.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'} | 
+                    Cleanliness: ${getStarsHTML(data.cleanliness)}<br>
+                    ${data.reviews.length} review(s)
+                </div>
+            `);
+
+                    // Add previous reviews - only if there are any
+                    if (data.reviews && data.reviews.length > 0) {
                         var reviewsHtml = '<div class="reviews-list"><h4>Previous Reviews</h4>';
-                        
+
                         data.reviews.forEach(review => {
                             reviewsHtml += `
-                                <div class="review-item">
-                                    <strong>${review.author}</strong> (${review.timestamp})<br>
-                                    ${review.accessible ? 'Accessible' : 'Not accessible'} | 
-                                    ${review.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'} | 
-                                    Cleanliness: ${getStarsHTML(review.cleanliness)}<br>
-                                    ${review.comment ? `"${review.comment}"` : ''}
-                                </div>
-                            `;
+                        <div class="review-item">
+                            <strong>${review.author}</strong> (${review.timestamp})<br>
+                            ${review.accessible ? 'Accessible' : 'Not accessible'} | 
+                            ${review.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'} | 
+                            Cleanliness: ${getStarsHTML(review.cleanliness)}<br>
+                            ${review.comment ? `"${review.comment}"` : ''}
+                        </div>
+                    `;
                         });
-                        
+
                         reviewsHtml += '</div>';
                         document.getElementById('review-form').insertAdjacentHTML('beforebegin', reviewsHtml);
                     }
                 })
                 .catch(error => console.error('Error loading toilet details:', error));
         }
-        
+
         // Close modal when clicking the X
-        document.querySelector('.close').addEventListener('click', function() {
+        document.querySelector('.close').addEventListener('click', function () {
             document.getElementById('review-modal').style.display = 'none';
         });
-        
+
         // Close modal when clicking outside of it
-        window.addEventListener('click', function(event) {
+        window.addEventListener('click', function (event) {
             if (event.target == document.getElementById('review-modal')) {
                 document.getElementById('review-modal').style.display = 'none';
             }
         });
-        
+
         // Load existing toilets
         fetch('/api/toilets')
             .then(response => response.json())
             .then(data => {
                 data.toilets.forEach(toilet => {
-                    var toiletMarker = L.marker([toilet.latitude, toilet.longitude], {icon: baseIcon}).addTo(map);
-                    
+                    // Use the appropriate icon based on cleanliness rating
+                    console.log(toilet.has_toilet_paper)
+                    var toiletIcon = getToiletIcon(toilet.cleanliness, toilet.has_toilet_paper);
+                    var toiletMarker = L.marker([toilet.latitude, toilet.longitude], { icon: toiletIcon }).addTo(map);
+
                     // Create popup content with a review button
                     var popupContent = `
-                        <strong>${toilet.description}</strong><br>
-                        Added by: ${toilet.author}<br>
-                        ${toilet.accessible ? 'Accessible' : 'Not accessible'}<br>
-                        ${toilet.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'}<br>
-                        Cleanliness: ${getStarsHTML(toilet.cleanliness)}<br>
-                        ${toilet.review_count} review(s)<br>
-                        <button class="review-btn" data-toilet-id="${toilet.id}">Leave a Review</button>
-                    `;
-                    
+                <strong>${toilet.description}</strong><br>
+                Added by: ${toilet.author}<br>
+                ${toilet.accessible ? 'Accessible' : 'Not accessible'}<br>
+                ${toilet.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'}<br>
+                Cleanliness: ${getStarsHTML(toilet.cleanliness)}<br>
+                ${toilet.review_count} review(s)<br>
+                <button class="review-btn" data-toilet-id="${toilet.id}">Leave a Review</button>
+            `;
+
                     var popup = L.popup().setContent(popupContent);
                     toiletMarker.bindPopup(popup);
-                    
+
                     // Improve touch handling on mobile
-                    toiletMarker.on('click', function() {
+                    toiletMarker.on('click', function () {
                         toiletMarker.openPopup();
                     });
-                    
+
                     // Add event listener to review button after popup is opened
-                    toiletMarker.on('popupopen', function() {
-                        setTimeout(function() {
+                    toiletMarker.on('popupopen', function () {
+                        setTimeout(function () {
                             var reviewBtn = document.querySelector('.review-btn');
                             if (reviewBtn) {
-                                reviewBtn.addEventListener('click', function(e) {
+                                reviewBtn.addEventListener('click', function (e) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     openReviewModal(this.getAttribute('data-toilet-id'));
@@ -310,11 +408,11 @@
                 });
             })
             .catch(error => console.error('Error loading toilets:', error));
-        
+
         // Add some extra CSS for better mobile experience
         var mapContainer = document.querySelector('.map-container');
         mapContainer.style.height = (window.innerHeight * 0.6) + 'px';
-        
+
         // Make review button more touch-friendly
         var style = document.createElement('style');
         style.textContent = `
@@ -351,28 +449,28 @@
             }
         `;
         document.head.appendChild(style);
-        
+
         // Function to update user's location on the map
         function updateUserLocation(position) {
             var userLat = position.coords.latitude;
             var userLng = position.coords.longitude;
-            
+
             // If this is the first location update, center the map
             if (!userLocationMarker) {
                 map.setView([userLat, userLng], 15);
-                userLocationMarker = L.marker([userLat, userLng], {icon: youIcon}).addTo(map);
+                userLocationMarker = L.marker([userLat, userLng], { icon: youIcon }).addTo(map);
                 userLocationMarker.bindPopup("You are here").openPopup();
             } else {
                 // Update the marker position
                 userLocationMarker.setLatLng([userLat, userLng]);
             }
         }
-        
+
         // Function to handle geolocation errors
         function handleLocationError(error) {
             console.error("Error getting location:", error.message);
         }
-        
+
         // Watch the user's position and update continuously
         if (navigator.geolocation) {
             // Get initial position
@@ -383,7 +481,7 @@
             };
 
             navigator.geolocation.getCurrentPosition(updateUserLocation, handleLocationError, options);
-            
+
             // Then watch for position changes
             var watchId = navigator.geolocation.watchPosition(updateUserLocation, handleLocationError, options);
         } else {
