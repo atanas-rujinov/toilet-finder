@@ -381,7 +381,7 @@
                 ${toilet.has_toilet_paper ? 'Has toilet paper' : 'No toilet paper'}<br>
                 Cleanliness: ${getStarsHTML(toilet.cleanliness)}<br>
                 ${toilet.review_count} review(s)<br>
-                <button class="review-btn" data-toilet-id="${toilet.id}">Leave a Review</button>
+                <button class="review-btn" data-toilet-id="${toilet.id}">Reviews</button>
             `;
 
                     var popup = L.popup().setContent(popupContent);
@@ -419,7 +419,7 @@
             .review-btn {
                 padding: 10px;
                 margin-top: 8px;
-                background-color: #4CAF50;
+                background-color: #007bff;
                 color: white;
                 border: none;
                 border-radius: 4px;

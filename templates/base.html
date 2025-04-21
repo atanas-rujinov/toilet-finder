@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #ffffff; /* same as original banner color */
         }
         .container {
             max-width: 1200px;
@@ -61,8 +61,8 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         .nav {
-            background-color: #333;
-            color: white;
+            background-color: #add8e6; /* light blue */
+            color: black;
             padding: 10px 0;
         }
         .nav .container {
@@ -71,7 +71,7 @@
             align-items: center;
         }
         .nav a {
-            color: white;
+            color: black; /* better contrast on light background */
             text-decoration: none;
             margin-left: 15px;
         }
@@ -99,7 +99,8 @@
             <div>
                 {% if session.user_id %}
                     <span>Welcome, {{ session.username }}!</span>
-                    <a href="{{ url_for('logout') }}">Logout</a>
+                    <br><br><br>
+                    <a href="{{ url_for('logout') }}"><b>Logout</b></a>
                 {% else %}
                     <a href="{{ url_for('login') }}">Login</a>
                     <a href="{{ url_for('signup') }}">Sign Up</a>
