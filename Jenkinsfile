@@ -7,11 +7,6 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/atanas-rujinov/toilet-finder.git'
-            }
-        }
 
         stage('Build Docker Image') {
             steps {
