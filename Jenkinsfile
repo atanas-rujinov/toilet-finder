@@ -69,7 +69,7 @@ stage('Deploy to Production') {
     steps {
         withCredentials([sshUserPrivateKey(credentialsId: 'deploy-key', keyFileVariable: 'SSH_KEY')]) {
             sh '''
-                ssh -i $SSH_KEY -o StrictHostKeyChecking=no deploy@192.168.14.129 'bash ~/deploy.sh'
+                ssh -i $SSH_KEY -o StrictHostKeyChecking=no -p 7822 deploy@192.168.14.129 'bash ~/deploy.sh'
             '''
         }
     }
