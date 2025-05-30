@@ -62,7 +62,7 @@ pipeline {
             }
         }
     }
-}
+    }
 
 
 stage('Deploy to Production') {
