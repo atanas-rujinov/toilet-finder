@@ -1,11 +1,13 @@
 pipeline {
     agent any
 
-    environment {
+   environment {
         IMAGE_NAME = "toilet-finder"
         DOCKER_TAG = "latest"
         DOCKER_HUB_USER = "atahacr"
-    }
+        FULL_IMAGE_NAME = "${DOCKER_HUB_USER}/${IMAGE_NAME}:${DOCKER_TAG}"
+   }
+
 
     stages {
         stage('Checkout') {
@@ -47,11 +49,13 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
-                        docker.image("${IMAGE_NAME}:${DOCKER_TAG}").push()
+                        docker.image("${IMAGE_NAME}:${DOCKER_TAG}").tag("${FULL_IMAGE_NAME}")
+                            docker.image("${FULL_IMAGE_NAME}").push()
+                        }
                     }
                 }
-            }
         }
+
 
         
     }
