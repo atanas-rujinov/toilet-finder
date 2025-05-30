@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "toilet-finder"
         DOCKER_TAG = "latest"
+        DOCKER_HUB_USER = "atanas-roujinov"
     }
 
     stages {
@@ -21,16 +22,6 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                script {
-                    docker.image("${IMAGE_NAME}:${DOCKER_TAG}").inside {
-                        sh 'pytest --maxfail=1 --disable-warnings -q'
-                    }
-                }
-            }
-        }
-
         stage('Test Docker Image') {
             steps {
                 script {
@@ -41,7 +32,30 @@ pipeline {
                 }
             }
         }
+
+        stage('Run Tests') {
+            steps {
+                script {
+                    docker.image("${IMAGE_NAME}:${DOCKER_TAG}").inside {
+                        sh 'pytest --maxfail=1 --disable-warnings -q'
+                    }
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
+                        docker.image("${IMAGE_NAME}:${DOCKER_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        
     }
+    
 
     post {
         always {
