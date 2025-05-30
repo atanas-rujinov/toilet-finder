@@ -65,6 +65,15 @@ pipeline {
 }
 
 
+stage('Deploy to Production') {
+    steps {
+        withCredentials([sshUserPrivateKey(credentialsId: 'deploy-key', keyFileVariable: 'SSH_KEY')]) {
+            sh '''
+                ssh -i $SSH_KEY -o StrictHostKeyChecking=no deploy@your-laptop-ip 'bash ~/deploy.sh'
+            '''
+        }
+    }
+}
 
 
 
