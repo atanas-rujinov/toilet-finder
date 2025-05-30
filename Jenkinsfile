@@ -21,6 +21,16 @@ pipeline {
             }
         }
 
+        stage('Run Tests') {
+            steps {
+                script {
+                    docker.image("${IMAGE_NAME}:${DOCKER_TAG}").inside {
+                        sh 'pytest --maxfail=1 --disable-warnings -q'
+                    }
+                }
+            }
+        }
+
         stage('Test Docker Image') {
             steps {
                 script {
