@@ -9,6 +9,7 @@ pipeline {
    }
 
 
+
     stages {
         stage('Checkout') {
             steps {
@@ -50,11 +51,12 @@ pipeline {
                 script {
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
                         docker.image("${IMAGE_NAME}:${DOCKER_TAG}").tag("${FULL_IMAGE_NAME}")
-                            docker.image("${FULL_IMAGE_NAME}").push()
-                        }
+                        docker.image("${FULL_IMAGE_NAME}").push()
                     }
                 }
+            }
         }
+
 
 
         
