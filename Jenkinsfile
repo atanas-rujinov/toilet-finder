@@ -53,14 +53,17 @@ pipeline {
         IMAGE_TAG = 'latest'
     }
     steps {
-        script {
-            def fullImageName = "${DOCKER_USER}/${REPO_NAME}:${IMAGE_TAG}"
-            sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}"
-            sh "docker tag ${REPO_NAME}:${IMAGE_TAG} ${fullImageName}"
-            sh "docker push ${fullImageName}"
+        withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWORD', variable: 'DOCKER_PASSWORD')]) {
+            script {
+                def fullImageName = "${DOCKER_USER}/${REPO_NAME}:${IMAGE_TAG}"
+                sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USER} --password-stdin"
+                sh "docker tag ${REPO_NAME}:${IMAGE_TAG} ${fullImageName}"
+                sh "docker push ${fullImageName}"
+            }
         }
     }
 }
+
 
 
 
