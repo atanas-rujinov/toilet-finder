@@ -46,16 +46,22 @@ pipeline {
             }
         }
 
-        stage('Push to Docker Hub') {
-            steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
-                        docker.image("${IMAGE_NAME}:${DOCKER_TAG}").tag("${FULL_IMAGE_NAME}")
-                        docker.image("${FULL_IMAGE_NAME}").push()
-                    }
-                }
-            }
+       stage('Push to Docker Hub') {
+    environment {
+        DOCKER_USER = 'atahacr'
+        REPO_NAME = 'toilet-finder'
+        IMAGE_TAG = 'latest'
+    }
+    steps {
+        script {
+            def fullImageName = "${DOCKER_USER}/${REPO_NAME}:${IMAGE_TAG}"
+            sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASSWORD}"
+            sh "docker tag ${REPO_NAME}:${IMAGE_TAG} ${fullImageName}"
+            sh "docker push ${fullImageName}"
         }
+    }
+}
+
 
 
 
