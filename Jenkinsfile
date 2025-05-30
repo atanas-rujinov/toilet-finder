@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE_NAME = "toilet-finder"
         DOCKER_TAG = "latest"
-        DOCKER_HUB_USER = "atanas-roujinov"
+        DOCKER_HUB_USER = "atahacr"
     }
 
     stages {
