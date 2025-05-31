@@ -4,6 +4,7 @@
 <div class="auth-form">
     <h2>Login</h2>
     <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username" class="form-control" required>
@@ -12,7 +13,7 @@
             <label for="password">Password</label>
             <input type="password" id="password" name="password" class="form-control" required>
         </div>
-        <button type="submit" class="btn">Login jenkins</button>
+        <button type="submit" class="btn">Login</button>
     </form>
     <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign up</a></p>
 </div>

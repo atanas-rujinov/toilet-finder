@@ -1,10 +1,13 @@
 # app.py
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime
 from statistics import median
+import re
+from markupsafe import escape
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key_for_testing')
@@ -13,7 +16,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# Models
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
+
+# Models (unchanged)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -80,6 +86,25 @@ class Review(db.Model):
 with app.app_context():
     db.create_all()
 
+def validate_coordinates(lat, lng):
+    try:
+        lat = float(lat)
+        lng = float(lng)
+        if not (-90 <= lat <= 90) or not (-180 <= lng <= 180):
+            raise ValueError("Invalid coordinates")
+        return lat, lng
+    except (ValueError, TypeError):
+        raise ValueError("Invalid coordinate format")
+
+def validate_email(email):
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def validate_username(username):
+    # Only allow alphanumeric and underscore, 3-20 chars
+    pattern = r'^[a-zA-Z0-9_]{3,20}$'
+    return re.match(pattern, username) is not None
+
 # Routes
 @app.route('/')
 def index():
@@ -90,9 +115,22 @@ def index():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
+        username = request.form['username'].strip()
+        email = request.form['email'].strip().lower()
         password = request.form['password']
+        
+        # Validate inputs
+        if not validate_username(username):
+            flash('Username must be 3-20 characters, letters/numbers/underscore only')
+            return redirect(url_for('signup'))
+            
+        if not validate_email(email):
+            flash('Please enter a valid email address')
+            return redirect(url_for('signup'))
+            
+        if len(password) < 8:
+            flash('Password must be at least 8 characters long')
+            return redirect(url_for('signup'))
         
         # Check if username or email already exists
         existing_user = User.query.filter_by(username=username).first()
@@ -119,7 +157,7 @@ def signup():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['username'].strip()
         password = request.form['password']
         
         user = User.query.filter_by(username=username).first()
@@ -153,62 +191,106 @@ def main():
 @app.route('/add_toilet', methods=['POST'])
 def add_toilet():
     if 'user_id' not in session:
+        flash('Please log in first')
         return redirect(url_for('login'))
     
-    latitude = request.form['latitude']
-    longitude = request.form['longitude']
-    description = request.form['description']
-    accessible = 'accessible' in request.form
-    has_toilet_paper = 'has_toilet_paper' in request.form
-    cleanliness = request.form['cleanliness']
-    
-    toilet = Toilet(
-        latitude=latitude,
-        longitude=longitude,
-        description=description,
-        accessible=accessible,
-        has_toilet_paper=has_toilet_paper,
-        cleanliness=cleanliness,
-        user_id=session['user_id']
-    )
-    
-    db.session.add(toilet)
-    db.session.commit()
-    
-    flash('Toilet added successfully!')
+    try:
+        # Validate coordinates
+        latitude, longitude = validate_coordinates(
+            request.form['latitude'], 
+            request.form['longitude']
+        )
+        
+        # Sanitize and validate description
+        description = escape(request.form['description'].strip())
+        if len(description) > 200:
+            description = description[:200]
+        if not description:
+            flash('Description is required')
+            return redirect(url_for('main'))
+        
+        # Validate cleanliness rating
+        cleanliness = int(request.form['cleanliness'])
+        if not (1 <= cleanliness <= 5):
+            raise ValueError("Invalid cleanliness rating")
+        
+        accessible = 'accessible' in request.form
+        has_toilet_paper = 'has_toilet_paper' in request.form
+        
+        toilet = Toilet(
+            latitude=latitude,
+            longitude=longitude,
+            description=description,
+            accessible=accessible,
+            has_toilet_paper=has_toilet_paper,
+            cleanliness=cleanliness,
+            user_id=session['user_id']
+        )
+        
+        db.session.add(toilet)
+        db.session.commit()
+        
+        flash('Toilet added successfully!')
+        
+    except (ValueError, KeyError) as e:
+        flash(f'Invalid input: {str(e)}')
+    except Exception as e:
+        flash('An error occurred while adding the toilet')
+        
     return redirect(url_for('main'))
 
 @app.route('/add_review/<int:toilet_id>', methods=['POST'])
 def add_review(toilet_id):
     if 'user_id' not in session:
-        return jsonify({"error": "You must be logged in to submit a review"}), 401
+        flash('Please log in first')
+        return redirect(url_for('login'))
     
-    toilet = Toilet.query.get_or_404(toilet_id)
+    try:
+        toilet = Toilet.query.get_or_404(toilet_id)
+        
+        # Validate cleanliness rating
+        cleanliness = int(request.form['cleanliness'])
+        if not (1 <= cleanliness <= 5):
+            raise ValueError("Invalid cleanliness rating")
+        
+        # Get review data from form
+        accessible = 'accessible' in request.form
+        has_toilet_paper = 'has_toilet_paper' in request.form
+        comment = escape(request.form.get('comment', '').strip())
+        
+        # Limit comment length
+        if len(comment) > 200:
+            comment = comment[:200]
+        
+        # Create new review
+        review = Review(
+            accessible=accessible,
+            has_toilet_paper=has_toilet_paper,
+            cleanliness=cleanliness,
+            comment=comment,
+            user_id=session['user_id'],
+            toilet_id=toilet_id
+        )
+        
+        db.session.add(review)
+        db.session.commit()
+        
+        flash('Review submitted successfully!')
+        
+    except (ValueError, KeyError) as e:
+        flash(f'Invalid input: {str(e)}')
+    except Exception as e:
+        flash('An error occurred while submitting the review')
     
-    # Get review data from form
-    accessible = 'accessible' in request.form
-    has_toilet_paper = 'has_toilet_paper' in request.form
-    cleanliness = int(request.form['cleanliness'])
-    comment = request.form.get('comment', '')
-    
-    # Create new review
-    review = Review(
-        accessible=accessible,
-        has_toilet_paper=has_toilet_paper,
-        cleanliness=cleanliness,
-        comment=comment,
-        user_id=session['user_id'],
-        toilet_id=toilet_id
-    )
-    
-    db.session.add(review)
-    db.session.commit()
-    
-    flash('Review submitted successfully!')
     return redirect(url_for('main'))
 
+# API routes - exempt from CSRF for JSON responses
 @app.route('/api/toilets')
+@csrf.exempt
 def get_toilets():
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+        
     toilets = Toilet.query.all()
     toilet_list = []
     
@@ -235,7 +317,11 @@ def get_toilets():
     return {'toilets': toilet_list}
 
 @app.route('/api/toilet/<int:toilet_id>')
+@csrf.exempt
 def get_toilet_details(toilet_id):
+    if 'user_id' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+        
     toilet = Toilet.query.get_or_404(toilet_id)
     
     # Get user who added the toilet
@@ -273,5 +359,13 @@ def get_toilet_details(toilet_id):
     
     return toilet_data
 
+# Error handlers
+@app.errorhandler(400)
+def bad_request(error):
+    if error.description == "The CSRF token is missing.":
+        flash('Security token missing. Please try again.')
+        return redirect(url_for('main'))
+    return "Bad Request", 400
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True, host='0.0.0.0')
