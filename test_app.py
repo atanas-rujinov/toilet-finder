@@ -44,14 +44,14 @@ def test_signup_login_logout(client):
     res = client.post('/signup', data={
         'username': 'user1',
         'email': 'user1@example.com',
-        'password': 'pw123'
+        'password': 'password123'
     }, follow_redirects=True)
     assert b'Account created successfully!' in res.data
     
     # Login
     res = client.post('/login', data={
         'username': 'user1',
-        'password': 'pw123'
+        'password': 'password123'
     }, follow_redirects=True)
     assert b'Logged in successfully!' in res.data
     
