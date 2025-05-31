@@ -22,7 +22,7 @@ def test_user_password():
 
 def test_toilet_median_and_consensus():
     u = User(username='user1', email='u1@example.com')
-    u.set_password('pw')
+    u.set_password('pw1234567890')
     t = Toilet(latitude=0, longitude=0, cleanliness=3, accessible=True, has_toilet_paper=True, user_id=1)
     
     r1 = Review(cleanliness=5, accessible=True, has_toilet_paper=False)
@@ -83,7 +83,7 @@ def test_api_toilets(client):
     # Add user and toilet manually
     with app.app_context():
         user = User(username='u', email='u@example.com')
-        user.set_password('pw')
+        user.set_password('pw1234567890')
         db.session.add(user)
         db.session.commit()
         
