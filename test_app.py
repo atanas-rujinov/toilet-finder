@@ -65,8 +65,8 @@ def test_add_toilet_requires_login(client):
     assert res.status_code == 302  # redirect
     
     # Login first
-    client.post('/signup', data={'username':'user1', 'email':'u1@example.com', 'password':'pw'})
-    client.post('/login', data={'username':'user1', 'password':'pw'})
+    client.post('/signup', data={'username':'user1', 'email':'u1@example.com', 'password':'pw1234567890'})
+    client.post('/login', data={'username':'user1', 'password':'pw1234567890'})
     
     # Add toilet with minimal data
     res = client.post('/add_toilet', data={
