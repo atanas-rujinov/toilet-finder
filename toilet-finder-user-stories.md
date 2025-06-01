@@ -4,7 +4,7 @@
 
 - **As a user**, I want to **search for nearby public toilets** so that I can **quickly find the nearest one when I need it**.
 - **As a user**, I want to **see toilet locations displayed on a map** so that I can **visually understand where they are**.
-- **As a user**, I want to **filter toilets by features (e.g., accessible, baby-changing, unisex)** so that I can **find toilets that meet my needs**.
+- **As a user**, I want to **filter toilets by features** so that I can **find toilets that meet my needs**.
 
 ## 📍 Location Awareness
 
@@ -13,7 +13,7 @@
 
 ## 📝 Toilet Details & Ratings
 
-- **As a user**, I want to **view detailed information about a toilet** (e.g., open hours, cleanliness, availability) so that I can **make an informed decision**.
+- **As a user**, I want to **view detailed information about a toilet** so that I can **make an informed decision**.
 - **As a user**, I want to **see ratings and reviews from other users** so that I can **choose a well-reviewed toilet**.
 - **As a user**, I want to **submit a review or rating** so that I can **help others find better options**.
 
@@ -21,10 +21,6 @@
 
 - **As a user**, I want to **add a new toilet location** so that I can **help improve the app for everyone**.
 - **As a user**, I want to **edit or suggest corrections for toilet details** so that **inaccuracies can be fixed**.
-
-## ⚙️ User Preferences
-
-- **As a user**, I want to **set preferences for the types of toilets I prefer** (e.g., accessible, clean, 24/7) so that I **get better search results**.
 
 ## 🔐 Admin / Power User Stories
 
