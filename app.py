@@ -1,5 +1,6 @@
 # app.py
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flasgger import Swagger
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,6 +11,20 @@ import re
 from markupsafe import escape
 
 app = Flask(__name__)
+
+from flasgger import Swagger
+
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "Toilet Finder API",
+        "description": "API documentation for public toilet data",
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "schemes": ["http"]
+})
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_key_for_testing')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///toilets.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -288,6 +303,44 @@ def add_review(toilet_id):
 @app.route('/api/toilets')
 @csrf.exempt
 def get_toilets():
+    """
+    Get all toilets
+    ---
+    tags:
+      - Toilets
+    responses:
+      200:
+        description: A list of all toilets
+        schema:
+          type: object
+          properties:
+            toilets:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  latitude:
+                    type: number
+                  longitude:
+                    type: number
+                  description:
+                    type: string
+                  accessible:
+                    type: boolean
+                  has_toilet_paper:
+                    type: boolean
+                  cleanliness:
+                    type: integer
+                  review_count:
+                    type: integer
+                  author:
+                    type: string
+      401:
+        description: Unauthorized
+    """
+
     if 'user_id' not in session:
         return jsonify({"error": "Authentication required"}), 401
         
@@ -319,21 +372,74 @@ def get_toilets():
 @app.route('/api/toilet/<int:toilet_id>')
 @csrf.exempt
 def get_toilet_details(toilet_id):
+    """
+    Get details of a specific toilet
+    ---
+    tags:
+      - Toilets
+    parameters:
+      - name: toilet_id
+        in: path
+        type: integer
+        required: true
+        description: ID of the toilet
+    responses:
+      200:
+        description: Details of the toilet with reviews
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            latitude:
+              type: number
+            longitude:
+              type: number
+            description:
+              type: string
+            accessible:
+              type: boolean
+            has_toilet_paper:
+              type: boolean
+            cleanliness:
+              type: integer
+            timestamp:
+              type: string
+            author:
+              type: string
+            reviews:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  accessible:
+                    type: boolean
+                  has_toilet_paper:
+                    type: boolean
+                  cleanliness:
+                    type: integer
+                  comment:
+                    type: string
+                  timestamp:
+                    type: string
+                  author:
+                    type: string
+      401:
+        description: Unauthorized
+    """
     if 'user_id' not in session:
         return jsonify({"error": "Authentication required"}), 401
-        
+
     toilet = Toilet.query.get_or_404(toilet_id)
-    
-    # Get user who added the toilet
     user = User.query.get(toilet.user_id)
     author_name = user.username if user else "Unknown"
-    
-    # Get reviews
+
     reviews_data = []
     for review in toilet.reviews:
         review_user = User.query.get(review.user_id)
         reviewer_name = review_user.username if review_user else "Unknown"
-        
         reviews_data.append({
             'id': review.id,
             'accessible': review.accessible,
@@ -343,7 +449,7 @@ def get_toilet_details(toilet_id):
             'timestamp': review.timestamp.strftime('%Y-%m-%d %H:%M'),
             'author': reviewer_name
         })
-    
+
     toilet_data = {
         'id': toilet.id,
         'latitude': toilet.latitude,
@@ -356,7 +462,7 @@ def get_toilet_details(toilet_id):
         'author': author_name,
         'reviews': reviews_data
     }
-    
+
     return toilet_data
 
 # Error handlers
