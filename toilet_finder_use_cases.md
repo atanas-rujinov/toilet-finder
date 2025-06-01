@@ -63,13 +63,3 @@
   2. Taps “Rate” or “Leave a Review.”
   3. Submits star rating and optional comment.
 - **Postconditions**: Feedback is stored and displayed with the toilet listing.
-
-### Use Case 6: Moderate Content
-
-- **Actor**: Administrator  
-- **Goal**: Ensure toilet entries are accurate and appropriate  
-- **Main Flow**:
-  1. Admin logs into backend or moderation interface.
-  2. Reviews pending submissions and edits.
-  3. Approves or rejects content.
-- **Postconditions**: Approved entries become visible to users.
