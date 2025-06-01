@@ -8,7 +8,7 @@
 
 <div class="toilet-form">
     <h3>Add a Toilet</h3>
-    <form id="add-toilet-form" method="post" action="{{ url_for('add_toilet') }}">
+    <form id="add-toilet-form" method="post" action="{{ url_for('main.add_toilet') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-group">
             <label for="description">Description</label>

@@ -100,10 +100,10 @@
                 {% if session.user_id %}
                     <span>Welcome, {{ session.username }}!</span>
                     <br><br><br>
-                    <a href="{{ url_for('logout') }}"><b>Logout</b></a>
+                    <a href="{{ url_for('auth.logout') }}"><b>Logout</b></a>
                 {% else %}
-                    <a href="{{ url_for('login') }}">Login</a>
-                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                    <a href="{{ url_for('auth.login') }}">Login</a>
+                    <a href="{{ url_for('auth.signup') }}">Sign Up</a>
                 {% endif %}
             </div>
         </div>

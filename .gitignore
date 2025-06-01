@@ -2,3 +2,5 @@
 app.py.swp
 instance/toilets.db
 __pycache__/
+app/__pycache__/
+app/instance/toilets.db
