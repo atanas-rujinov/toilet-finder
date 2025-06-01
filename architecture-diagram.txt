@@ -1,0 +1,41 @@
+                   +--------------------------+
+                   |      Web Browser /      |
+                   |      API Client         |
+                   +-----------+--------------+
+                               |
+                               v
+                   +--------------------------+
+                   |        Flask App         |
+                   |     (run.py entrypoint)  |
+                   +-----------+--------------+
+                               |
+        +----------------------+-------------------------+
+        |                      |                         |
+        v                      v                         v
++---------------+    +------------------+        +----------------+
+| View Layer    |    | Controllers      |        | Swagger UI     |
+| (Blueprints)  |    | (Business Logic) |        | (API Docs)     |
+| - auth.py     |    | - AuthController|        | via flasgger   |
+| - main.py     |    | - ToiletController       |                |
+| - api.py      |    | - ApiController |        +----------------+
++---------------+    +------------------+
+        |                      |
+        |                      |
+        v                      v
++---------------------+   +--------------------------+
+| Forms / Flash Msgs  |   | Session / CSRF Handling  |
+| via Jinja2 Templates|   | via Flask-WTF, CSRFProtect|
++---------------------+   +--------------------------+
+        |
+        v
++--------------------------+
+|     Models (SQLAlchemy) |
+| - User, Toilet, Review  |
++-----------+--------------+
+            |
+            v
++--------------------------+
+|     SQLite Database      |
+|    (toilets.db file)     |
++--------------------------+
+
